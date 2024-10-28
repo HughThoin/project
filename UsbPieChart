@@ -1,0 +1,70 @@
+import javax.swing.*;
+import java.awt.*;
+
+public class UsbPieChart extends JPanel {
+
+    private final int[] values;
+    private final Color[] colors;
+    private final String[] labels;
+
+    public UsbPieChart(int[] values, String[] labels) {
+        this.values = values;
+        this.labels = labels;
+        this.colors = new Color[]{Color.RED, Color.BLUE, Color.GREEN, Color.ORANGE, Color.CYAN, Color.MAGENTA};
+        setPreferredSize(new Dimension(800, 600));
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        drawPieChart(g);
+    }
+
+    private void drawPieChart(Graphics g) {
+        int total = 0;
+        for (int value : values) {
+            total += value;
+        }
+
+        //Draw angles of piechart
+        int startAngle = 0;
+        for (int i = 0; i < values.length; i++) {
+            int angle = (int) Math.round((double) values[i] / total * 360);
+            g.setColor(colors[i % colors.length]);
+            g.fillArc(100, 100, 400, 400, startAngle, angle);
+            startAngle += angle;
+        }
+
+        // Draw the legend
+        for (int i = 0; i < labels.length; i++) {
+            g.setColor(colors[i % colors.length]);
+            g.fillRect(520, 100 + (i * 30), 20, 20);
+            g.setColor(Color.BLACK);
+            g.drawString(labels[i], 550, 115 + (i * 30));
+        }
+    }
+
+    public static void main(String[] args) {
+        usbInfo usbInfoInstance = new usbInfo();
+        usbInfoInstance.read();
+
+        int busCount = usbInfoInstance.busCount();
+        int[] deviceCounts = new int[busCount];
+        String[] labels = new String[busCount];
+
+        //Labels Buses and devices
+        for (int i = 0; i < busCount; i++) {
+            deviceCounts[i] = usbInfoInstance.deviceCount(i);
+            labels[i] = "Bus " + i + " (Devices: " + deviceCounts[i] + ")";
+        }
+
+        //Create statements
+        JFrame frame = new JFrame("USB Buses Pie Chart");
+        UsbPieChart pieChart = new UsbPieChart(deviceCounts, labels);
+        frame.add(pieChart);
+        frame.pack();
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setLocationRelativeTo(null);
+        frame.setVisible(true);
+    }
+}
