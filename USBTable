@@ -1,0 +1,79 @@
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableRowSorter;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+public class USBTable extends JFrame {
+    private usbInfo usbInfoInstance;
+    private JTable table;
+    private DefaultTableModel tableModel;
+    private JTextField searchField;
+
+    public USBTable() {
+        usbInfoInstance = new usbInfo();
+        usbInfoInstance.read();
+
+        setTitle("USB Devices Table");
+        setSize(600, 400);
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setLayout(new BorderLayout());
+
+        String[] columnNames = {"Bus", "Device", "Vendor ID", "Product ID"};
+        tableModel = new DefaultTableModel(columnNames, 0);
+        table = new JTable(tableModel);
+        table.setFillsViewportHeight(true);
+
+        // Populate the table with USB device information
+        populateTable();
+
+        // Add a search field
+        searchField = new JTextField();
+        searchField.addActionListener(new SearchAction());
+        add(searchField, BorderLayout.NORTH);
+
+        // Create a row sorter for the table
+        TableRowSorter<DefaultTableModel> sorter = new TableRowSorter<>(tableModel);
+        table.setRowSorter(sorter);
+
+        JScrollPane scrollPane = new JScrollPane(table);
+        add(scrollPane, BorderLayout.CENTER);
+    }
+
+    private void populateTable() {
+        int busCount = usbInfoInstance.busCount();
+        for (int bus = 0; bus < busCount; bus++) {
+            int deviceCount = usbInfoInstance.deviceCount(bus);
+            for (int device = 0; device < deviceCount; device++) {
+                Object[] row = {
+                        bus,
+                        device,
+                        usbInfoInstance.vendorID(bus, device),
+                        usbInfoInstance.productID(bus, device)
+                };
+                tableModel.addRow(row);
+            }
+        }
+    }
+
+    private class SearchAction implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            String query = searchField.getText();
+            TableRowSorter<DefaultTableModel> sorter = (TableRowSorter<DefaultTableModel>) table.getRowSorter();
+            if (query.trim().length() == 0) {
+                sorter.setRowFilter(null);
+            } else {
+                sorter.setRowFilter(RowFilter.regexFilter("(?i)" + query));
+            }
+        }
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            USBTable usbTable = new USBTable();
+            usbTable.setVisible(true);
+        });
+    }
+}
