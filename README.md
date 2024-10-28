@@ -1,2 +1,2 @@
 End of block project
-USB protion
+USB portion
