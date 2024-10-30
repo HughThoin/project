@@ -1,0 +1,66 @@
+import javax.swing.*;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+public class UsbInfoTree extends JFrame {
+    private usbInfo usb; // Assume usbInfo is properly loaded and linked
+
+    public UsbInfoTree(usbInfo usb) {
+        this.usb = usb;
+        setTitle("USB Info Display");
+        setSize(500, 400);
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setLayout(new BorderLayout());
+
+        JButton refreshButton = new JButton("Refresh");
+        JPanel panel = new JPanel();
+        panel.add(refreshButton);
+        add(panel, BorderLayout.NORTH);
+
+        DefaultMutableTreeNode root = new DefaultMutableTreeNode("USB Buses");
+        JTree tree = new JTree(root);
+        JScrollPane treeView = new JScrollPane(tree);
+        add(treeView, BorderLayout.CENTER);
+
+        refreshButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                refreshTree(root);
+                tree.setModel(new DefaultTreeModel(root));
+            }
+        });
+
+        refreshTree(root); // Initial load
+    }
+
+    private void refreshTree(DefaultMutableTreeNode root) {
+        root.removeAllChildren(); // Clear previous data
+        usb.read(); // Refresh values
+
+        int busCount = usb.busCount();
+        for (int bus = 0; bus < busCount; bus++) {
+            DefaultMutableTreeNode busNode = new DefaultMutableTreeNode("Bus " + bus);
+            int deviceCount = usb.deviceCount(bus);
+            for (int device = 0; device < deviceCount; device++) {
+                int vendorId = usb.vendorID(bus, device);
+                int productId = usb.productID(bus, device);
+                busNode.add(new DefaultMutableTreeNode("Device " + device + " - Vendor ID: " + vendorId + ", Product ID: " + productId));
+            }
+            root.add(busNode);
+        }
+    }
+
+    public static void main(String[] args) {
+        // Assuming usbInfo is properly instantiated, for example:
+        System.loadLibrary("sysinfo");
+        usbInfo usb = new usbInfo();
+
+        SwingUtilities.invokeLater(() -> {
+            UsbInfoTree display = new UsbInfoTree(usb);
+            display.setVisible(true);
+        });
+    }
+}
