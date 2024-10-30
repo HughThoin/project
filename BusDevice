@@ -1,0 +1,81 @@
+import java.util.ArrayList;
+import java.util.List;
+
+class BusDevice {
+    private int bus;
+    private int device;
+    private int vendorID;
+    private int productID;
+
+    public BusDevice(int bus, int device, int vendorID, int productID) {
+        this.bus = bus;
+        this.device = device;
+        this.vendorID = vendorID;
+        this.productID = productID;
+    }
+
+    public int getBus() {
+        return bus;
+    }
+
+    public int getDevice() {
+        return device;
+    }
+
+    public int getVendorID() {
+        return vendorID;
+    }
+
+    public int getProductID() {
+        return productID;
+    }
+
+    // Format the array
+    @Override
+    public String toString() {
+        return String.format("Bus: %d, Device: %d, Vendor ID: 0x%04X, Product ID: 0x%04X",
+                bus, device, vendorID, productID);
+    }
+}
+
+public class USBInfoCollector {
+
+    public static void main(String[] args) {
+        System.loadLibrary("sysinfo");
+        usbInfo usb = new usbInfo();
+        usb.read();
+
+        // Initialize list of devices
+        List<BusDevice> busDevices = new ArrayList<>();
+
+        // Iterate through each bus
+        for (int busIndex = 1; busIndex <= usb.busCount(); busIndex++) {
+            int deviceCount = usb.deviceCount(busIndex);
+//            System.out.println("Bus " + busIndex + " has " + deviceCount + " devices"); // Displays buses and how many devices they have
+
+            // Iterate for devices on the current bus
+            for (int deviceIndex = 1; deviceIndex <= deviceCount; deviceIndex++) {
+                // Get vendor and product ID
+                int vendorID = usb.vendorID(busIndex, deviceIndex);
+                int productID = usb.productID(busIndex, deviceIndex);
+
+                // Output the device information
+//                System.out.println("Bus " + busIndex + " device " + deviceIndex +
+//                        " has vendor " + String.format("0x%04X", vendorID) +
+//                        " and product " + String.format("0x%04X", productID));
+
+                // Create a BusDeviceFetch object with the collected data
+                BusDevice busDevice = new BusDevice(busIndex, deviceIndex, vendorID, productID);
+                busDevices.add(busDevice);
+            }
+        }
+
+        // Output the results of the array
+        System.out.println("\nCollected USB Bus Device Information:");
+
+        // Loop through the array
+        for (BusDevice bd : busDevices) {
+            System.out.println(bd);
+        }
+    }
+}
